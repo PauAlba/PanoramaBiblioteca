@@ -35,12 +35,11 @@
       width: 100%;
       height: 100%;
       pointer-events: none;
-      /* Permite arrastrar la vista 360 a través del fondo */
       z-index: 100;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      padding: 24px;
+      padding: 20px;
     }
 
     /* Tarjeta informativa Glassmorphism */
@@ -51,7 +50,7 @@
       -webkit-backdrop-filter: blur(16px);
       border: 1px solid rgba(255, 255, 255, 0.15);
       border-radius: 16px;
-      padding: 20px 24px;
+      padding: 16px 20px;
       color: #ffffff;
       max-width: 380px;
       box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
@@ -71,29 +70,29 @@
       text-transform: uppercase;
       letter-spacing: 1.2px;
       color: #60a5fa;
-      margin-bottom: 6px;
+      margin-bottom: 4px;
     }
 
     .card-info h1 {
-      font-size: 1.35rem;
+      font-size: 1.25rem;
       font-weight: 700;
-      margin-bottom: 4px;
+      margin-bottom: 2px;
       color: #f9fafb;
     }
 
     .card-info p.subtitle {
-      font-size: 0.85rem;
+      font-size: 0.8rem;
       color: #9ca3af;
-      margin-bottom: 16px;
+      margin-bottom: 12px;
     }
 
     .student-data {
       border-top: 1px solid rgba(255, 255, 255, 0.1);
-      padding-top: 12px;
+      padding-top: 10px;
       display: grid;
       grid-template-columns: auto 1fr;
-      gap: 6px 14px;
-      font-size: 0.85rem;
+      gap: 4px 12px;
+      font-size: 0.8rem;
     }
 
     .student-data span.label {
@@ -110,7 +109,8 @@
     .controls-bar {
       pointer-events: auto;
       display: flex;
-      gap: 12px;
+      flex-wrap: wrap;
+      gap: 10px;
       align-self: flex-start;
     }
 
@@ -120,14 +120,15 @@
       -webkit-backdrop-filter: blur(12px);
       border: 1px solid rgba(255, 255, 255, 0.2);
       color: #f9fafb;
-      padding: 10px 16px;
-      font-size: 0.85rem;
+      padding: 8px 14px;
+      font-size: 0.82rem;
       font-weight: 500;
       border-radius: 10px;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
+      text-decoration: none;
       transition: background 0.2s, transform 0.1s;
     }
 
@@ -150,6 +151,14 @@
       font-size: 0.75rem;
       color: rgba(255, 255, 255, 0.75);
       margin-bottom: 8px;
+    }
+
+    /* Ocultar elementos innecesarios en móviles, pantallas táctiles y visores VR */
+    @media (pointer: coarse),
+    (max-width: 768px) {
+      .desktop-only {
+        display: none !important;
+      }
     }
   </style>
 </head>
@@ -180,24 +189,26 @@
       </div>
     </div>
 
-    <div class="interaction-hint">
+    <!-- Pista de interacción (solo visible en computadoras con ratón) -->
+    <div class="interaction-hint desktop-only">
       Arrastra con el ratón para rotar 360°
     </div>
 
     <!-- Botones interactivos -->
     <div class="controls-bar">
       <button class="control-btn" id="btnToggleInfo">Ocultar datos</button>
-      <button class="control-btn" id="btnResetView">Centrar vista</button>
-      <button class="control-btn" id="btnFullscreen">Pantalla completa</button>
+      <button class="control-btn desktop-only" id="btnResetView">Centrar vista</button>
+      <button class="control-btn desktop-only" id="btnFullscreen">Pantalla completa</button>
       <button class="control-btn" id="btnEnterVR">Entrar a VR </button>
+      <a href="krpano/tour.html" class="control-btn" id="btnKrpano">Ver en krpano 🔄</a>
     </div>
   </div>
 
-  <!-- Escena A-Frame -->
-  <a-scene embedded vr-mode-ui="enabled: true">
+  <!-- Escena A-Frame (sin embedded para garantizar compatibilidad con WebXR en Quest) -->
+  <a-scene vr-mode-ui="enabled: true">
     <!-- Carga de Textura Equirrectangular -->
     <a-assets>
-      <img id="panorama" src="panorama_Biblioteca.jpg" crossorigin="anonymous">
+      <img id="panorama" src="panorama_web.jpg" crossorigin="anonymous">
     </a-assets>
 
     <!-- Proyección envolvente de la biblioteca -->
@@ -225,25 +236,30 @@
       btnToggleInfo.textContent = isHidden ? 'Mostrar datos' : 'Ocultar datos';
     });
 
-    // Recentrar la rotación de la cámara
-    btnResetView.addEventListener('click', () => {
-      camera.components['look-controls'].yawObject.rotation.set(0, 0, 0);
-      camera.components['look-controls'].pitchObject.rotation.set(0, 0, 0);
-    });
+    // Recentrar la rotación de la cámara (si existe el botón en la vista)
+    if (btnResetView) {
+      btnResetView.addEventListener('click', () => {
+        camera.components['look-controls'].yawObject.rotation.set(0, 0, 0);
+        camera.components['look-controls'].pitchObject.rotation.set(0, 0, 0);
+      });
+    }
 
-    // Alternar pantalla completa
-    btnFullscreen.addEventListener('click', () => {
-      if (!document.fullscreenElement) {
-        document.documentElement.requestFullscreen().catch(err => console.log(err));
-        btnFullscreen.textContent = 'Salir de pantalla completa';
-      } else {
-        if (document.exitFullscreen) {
-          document.exitFullscreen();
-          btnFullscreen.textContent = 'Pantalla completa';
+    // Alternar pantalla completa (si existe el botón en la vista)
+    if (btnFullscreen) {
+      btnFullscreen.addEventListener('click', () => {
+        if (!document.fullscreenElement) {
+          document.documentElement.requestFullscreen().catch(err => console.log(err));
+          btnFullscreen.textContent = 'Salir de pantalla completa';
+        } else {
+          if (document.exitFullscreen) {
+            document.exitFullscreen();
+            btnFullscreen.textContent = 'Pantalla completa';
+          }
         }
-      }
-    });
+      });
+    }
 
+    // Disparador de inmersión VR
     document.getElementById('btnEnterVR').addEventListener('click', () => {
       document.querySelector('a-scene').enterVR();
     });
