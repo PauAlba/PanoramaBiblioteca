@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Entorno VR 360 - Biblioteca</title>
+
+  <!-- A-Frame 1.5.0 -->
+  <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+
+  <style>
+    /* Reset y tipografía */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      user-select: none;
+    }
+
+    body,
+    html {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #000;
+    }
+
+    /* Capa de interfaz gráfica sobre WebGL */
+    .ui-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      /* Permite arrastrar la vista 360 a través del fondo */
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 24px;
+    }
+
+    /* Tarjeta informativa Glassmorphism */
+    .card-info {
+      pointer-events: auto;
+      background: rgba(20, 24, 33, 0.75);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 16px;
+      padding: 20px 24px;
+      color: #ffffff;
+      max-width: 380px;
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+
+    .card-info.hidden {
+      opacity: 0;
+      transform: translateY(-10px);
+      pointer-events: none;
+    }
+
+    .institution-tag {
+      display: inline-block;
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      color: #60a5fa;
+      margin-bottom: 6px;
+    }
+
+    .card-info h1 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      margin-bottom: 4px;
+      color: #f9fafb;
+    }
+
+    .card-info p.subtitle {
+      font-size: 0.85rem;
+      color: #9ca3af;
+      margin-bottom: 16px;
+    }
+
+    .student-data {
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      padding-top: 12px;
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 6px 14px;
+      font-size: 0.85rem;
+    }
+
+    .student-data span.label {
+      color: #9ca3af;
+      font-weight: 500;
+    }
+
+    .student-data span.val {
+      color: #f3f4f6;
+      font-weight: 600;
+    }
+
+    /* Barra de botones de control */
+    .controls-bar {
+      pointer-events: auto;
+      display: flex;
+      gap: 12px;
+      align-self: flex-start;
+    }
+
+    .control-btn {
+      background: rgba(20, 24, 33, 0.75);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #f9fafb;
+      padding: 10px 16px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      border-radius: 10px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: background 0.2s, transform 0.1s;
+    }
+
+    .control-btn:hover {
+      background: rgba(37, 99, 235, 0.85);
+      border-color: rgba(96, 165, 250, 0.5);
+    }
+
+    .control-btn:active {
+      transform: scale(0.97);
+    }
+
+    /* Hint de navegación */
+    .interaction-hint {
+      pointer-events: none;
+      align-self: center;
+      background: rgba(0, 0, 0, 0.5);
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      color: rgba(255, 255, 255, 0.75);
+      margin-bottom: 8px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Capa UI -->
+  <div class="ui-overlay">
+
+    <!-- Tarjeta de Identificación y Locación -->
+    <div class="card-info" id="infoCard">
+      <span class="institution-tag" id="uniTag">Universidad La Salle Bajío</span>
+      <h1>Entorno VR 360°</h1>
+      <p class="subtitle">Locación: Biblioteca</p>
+
+      <div class="student-data">
+        <span class="label">Universidad:</span>
+        <span class="val">La Salle Bajío</span>
+
+        <span class="label">Alumna:</span>
+        <span class="val">Paulina Giovanna Orozco De Alba</span>
+
+        <span class="label">Matrícula:</span>
+        <span class="val">79849</span>
+
+        <span class="label">Materia:</span>
+        <span class="val">Realidad Virtual</span>
+      </div>
+    </div>
+
+    <div class="interaction-hint">
+      Arrastra con el ratón para rotar 360° • Usa la rueda para hacer zoom
+    </div>
+
+    <!-- Botones interactivos -->
+    <div class="controls-bar">
+      <button class="control-btn" id="btnToggleInfo">Ocultar datos</button>
+      <button class="control-btn" id="btnResetView">Centrar vista</button>
+      <button class="control-btn" id="btnFullscreen">Pantalla completa</button>
+    </div>
+  </div>
+
+  <!-- Escena A-Frame -->
+  <a-scene embedded vr-mode-ui="enabled: true">
+    <!-- Carga de Textura Equirrectangular -->
+    <a-assets>
+      <img id="panorama" src="panorama_web.jpg" crossorigin="anonymous">
+    </a-assets>
+
+    <!-- Proyección envolvente de la biblioteca -->
+    <a-sky src="#panorama" rotation="0 -90 0"></a-sky>
+
+    <!-- Cámara central con controles de ratón y VR -->
+    <a-entity id="rig" position="0 0 0">
+      <a-camera id="mainCamera" position="0 0 0" look-controls="pointerLockEnabled: false"
+        wasd-controls-enabled="false">
+      </a-camera>
+    </a-entity>
+  </a-scene>
+
+  <!-- Script interactivo -->
+  <script>
+    const infoCard = document.getElementById('infoCard');
+    const btnToggleInfo = document.getElementById('btnToggleInfo');
+    const btnResetView = document.getElementById('btnResetView');
+    const btnFullscreen = document.getElementById('btnFullscreen');
+    const camera = document.getElementById('mainCamera');
+
+    // Alternar visibilidad de la tarjeta
+    btnToggleInfo.addEventListener('click', () => {
+      const isHidden = infoCard.classList.toggle('hidden');
+      btnToggleInfo.textContent = isHidden ? 'Mostrar datos' : 'Ocultar datos';
+    });
+
+    // Recentrar la rotación de la cámara
+    btnResetView.addEventListener('click', () => {
+      camera.components['look-controls'].yawObject.rotation.set(0, 0, 0);
+      camera.components['look-controls'].pitchObject.rotation.set(0, 0, 0);
+    });
+
+    // Alternar pantalla completa
+    btnFullscreen.addEventListener('click', () => {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(err => console.log(err));
+        btnFullscreen.textContent = 'Salir de pantalla completa';
+      } else {
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+          btnFullscreen.textContent = 'Pantalla completa';
+        }
+      }
+    });
+  </script>
+</body>
+
+</html>
