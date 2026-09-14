@@ -181,7 +181,7 @@
     </div>
 
     <div class="interaction-hint">
-      Arrastra con el ratón para rotar 360° • Usa la rueda para hacer zoom
+      Arrastra con el ratón para rotar 360°
     </div>
 
     <!-- Botones interactivos -->
@@ -189,6 +189,7 @@
       <button class="control-btn" id="btnToggleInfo">Ocultar datos</button>
       <button class="control-btn" id="btnResetView">Centrar vista</button>
       <button class="control-btn" id="btnFullscreen">Pantalla completa</button>
+      <button class="control-btn" id="btnEnterVR">Entrar a VR </button>
     </div>
   </div>
 
@@ -196,7 +197,7 @@
   <a-scene embedded vr-mode-ui="enabled: true">
     <!-- Carga de Textura Equirrectangular -->
     <a-assets>
-      <img id="panorama" src="panorama_web.jpg" crossorigin="anonymous">
+      <img id="panorama" src="panorama_Biblioteca.jpg" crossorigin="anonymous">
     </a-assets>
 
     <!-- Proyección envolvente de la biblioteca -->
@@ -241,6 +242,10 @@
           btnFullscreen.textContent = 'Pantalla completa';
         }
       }
+    });
+
+    document.getElementById('btnEnterVR').addEventListener('click', () => {
+      document.querySelector('a-scene').enterVR();
     });
   </script>
 </body>
